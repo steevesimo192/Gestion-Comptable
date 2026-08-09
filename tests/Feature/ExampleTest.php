@@ -18,6 +18,8 @@ class ExampleTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Cartographie relationnelle')
             ->assertSee('Relations expliquées')
+            ->assertSee('Les petits robots de cette boîte')
+            ->assertSee('Le mini-dictionnaire')
             ->assertSee('dossiers_comptables');
     }
 
@@ -29,10 +31,15 @@ class ExampleTest extends TestCase
             ->assertOk()
             ->assertJsonStructure([
                 'categories',
-                'tables' => [['name', 'label', 'description', 'category', 'columns']],
+                'tables' => [['name', 'label', 'description', 'simple_description', 'category', 'columns']],
                 'relations',
-                'stats' => ['tables', 'columns', 'relations', 'categories'],
+                'triggers' => [['name', 'source', 'target', 'event', 'title', 'simple', 'why', 'installed']],
+                'stories',
+                'glossary',
+                'stats' => ['tables', 'columns', 'relations', 'categories', 'triggers'],
             ])
-            ->assertJsonPath('stats.tables', 39);
+            ->assertJsonPath('stats.tables', 40)
+            ->assertJsonPath('stats.triggers', 18)
+            ->assertJsonPath('triggers.6.title', 'Bloquer le trop-payé');
     }
 }

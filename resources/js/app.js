@@ -6,6 +6,7 @@ Alpine.data('schemaExplorer', (schema) => ({
     schema,
     search: '',
     category: 'all',
+    mode: 'discovery',
     selectedName: 'ecritures',
     showAllRelations: false,
     positions: {},
@@ -59,7 +60,7 @@ Alpine.data('schemaExplorer', (schema) => ({
 
         return this.schema.tables.filter((table) => {
             const categoryMatches = this.category === 'all' || table.category === this.category;
-            const searchMatches = !query || [table.name, table.label, table.description]
+            const searchMatches = !query || [table.name, table.label, table.description, table.simple_description]
                 .some((value) => value.toLowerCase().includes(query));
 
             return categoryMatches && searchMatches;
@@ -78,6 +79,24 @@ Alpine.data('schemaExplorer', (schema) => ({
 
     get outgoingRelations() {
         return this.schema.relations.filter((relation) => relation.source === this.selectedName);
+    },
+
+    get selectedTriggers() {
+        return this.schema.triggers.filter((trigger) =>
+            trigger.source === this.selectedName || trigger.target === this.selectedName
+        );
+    },
+
+    get discoveryMode() {
+        return this.mode === 'discovery';
+    },
+
+    tableLabel(name) {
+        return this.tableByName(name)?.label ?? name;
+    },
+
+    selectTriggerTable(trigger) {
+        this.selectedName = trigger.source;
     },
 
     isNodeVisible(name) {

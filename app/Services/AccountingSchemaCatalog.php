@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -19,6 +20,7 @@ class AccountingSchemaCatalog
         $categories = config('accounting_schema.categories', []);
         $tables = [];
         $relations = [];
+        $simpleDescriptions = config('accounting_schema.simple_descriptions', []);
 
         foreach ($definitions as $name => $definition) {
             $columns = [];
@@ -48,6 +50,7 @@ class AccountingSchemaCatalog
                 'name' => $name,
                 'label' => $definition['label'],
                 'description' => $definition['description'],
+                'simple_description' => $simpleDescriptions[$name] ?? $definition['description'],
                 'category' => $definition['category'],
                 'category_label' => $categories[$definition['category']]['label'],
                 'color' => $categories[$definition['category']]['color'],
@@ -81,20 +84,27 @@ class AccountingSchemaCatalog
                         'on_delete' => strtolower((string) ($foreignKey['on_delete'] ?? 'no action')),
                         'on_update' => strtolower((string) ($foreignKey['on_update'] ?? 'no action')),
                         'description' => $this->describeRelation($name, $column, $target, $targetColumn, $foreignKey['on_delete'] ?? null, $definitions),
+                        'simple_description' => $this->describeSimpleRelation($name, $target, $definitions),
                     ];
                 }
             }
         }
 
+        $triggers = $this->buildTriggers();
+
         return [
             'categories' => collect($categories)->map(fn (array $category, string $key) => ['key' => $key, ...$category])->values()->all(),
             'tables' => array_values($tables),
             'relations' => $relations,
+            'triggers' => $triggers,
+            'stories' => config('accounting_schema.stories', []),
+            'glossary' => config('accounting_schema.glossary', []),
             'stats' => [
                 'tables' => count($tables),
                 'columns' => collect($tables)->sum(fn (array $table) => count($table['columns'])),
                 'relations' => count($relations),
                 'categories' => count($categories),
+                'triggers' => count($triggers),
             ],
         ];
     }
@@ -117,5 +127,36 @@ class AccountingSchemaCatalog
         };
 
         return "{$sourceLabel}.{$column} référence {$targetLabel}.{$targetColumn}. {$behavior}";
+    }
+
+    /** @param array<string, array<string, string>> $definitions */
+    private function describeSimpleRelation(string $source, string $target, array $definitions): string
+    {
+        $sourceLabel = Arr::get($definitions, "$source.label", $source);
+        $targetLabel = Arr::get($definitions, "$target.label", $target);
+
+        return "Chaque « {$sourceLabel} » garde une flèche vers le « {$targetLabel} » auquel il appartient.";
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function buildTriggers(): array
+    {
+        $definitions = config('accounting_schema.triggers', []);
+        $installed = [];
+
+        try {
+            if (DB::getDriverName() === 'pgsql') {
+                $installed = collect(DB::select('SELECT tgname FROM pg_trigger WHERE NOT tgisinternal'))
+                    ->pluck('tgname')
+                    ->all();
+            }
+        } catch (Throwable) {
+            // Le mode pédagogique reste disponible même si PostgreSQL est momentanément indisponible.
+        }
+
+        return collect($definitions)->map(fn (array $trigger) => [
+            ...$trigger,
+            'installed' => in_array($trigger['name'], $installed, true),
+        ])->values()->all();
     }
 }
