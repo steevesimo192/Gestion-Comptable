@@ -1,4 +1,30 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Gestion Comptable
+
+Microservice Laravel dédié à la comptabilité générale, auxiliaire, analytique, fiscale et de trésorerie. La création et la gestion des entreprises restent dans le service propriétaire : ce service ne conserve que leur identifiant externe dans `dossiers_comptables.entreprise_id`.
+
+## Base PostgreSQL locale
+
+```bash
+docker compose up -d database
+php artisan migrate
+```
+
+PostgreSQL écoute par défaut sur `127.0.0.1:5432`. Les identifiants de développement sont documentés dans `.env.example` et peuvent être surchargés dans `.env`.
+
+Le détail en français des tables ajoutées, des attributs remplacés et des suppressions se trouve dans [`docs/SCHEMA_COMPTABLE.md`](docs/SCHEMA_COMPTABLE.md).
+
+## Explorateur visuel du schéma
+
+L'interface Alpine.js lit les colonnes et clés étrangères de la base migrée, puis les enrichit avec les explications métier de `config/accounting_schema.php`.
+
+```bash
+docker compose up -d database
+php artisan serve
+```
+
+Ouvrir ensuite [http://127.0.0.1:8000](http://127.0.0.1:8000). Le catalogue brut est aussi disponible sur `/api/schema`.
+
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>

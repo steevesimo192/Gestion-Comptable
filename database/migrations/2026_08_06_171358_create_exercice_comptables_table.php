@@ -11,23 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ajout : exercices comptables avec états de validation, verrouillage et clôture auditable.
         Schema::create('exercice_comptables', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('referentiel_comptable_id')->constrained('referentiel_comptables')
             ->cascadeOnUpdate()
-            ->cascadeOnDelete();
-            $table->foreignUuid('devise_id')->constrained('devises')
-            ->nullable()
-            ->cascadeOnUpdate()
-            ->nullOnDelete();
-            $table->uuid('entreprise_id')->nullable();
+            ->restrictOnDelete();
+            $table->foreignUuid('devise_id')->nullable()->constrained('devises')->nullOnDelete();
+            $table->foreignUuid('dossier_comptable_id')->constrained('dossiers_comptables')->cascadeOnDelete();
             $table->date('date_debut');
             $table->date('date_fin');
-            $table->boolean('est_cloturer')->default(false);
+            $table->string('statut', 20)->default('ouvert');
             $table->string('titre');
             $table->integer('annee');
-            $table->date('date_cloture')->nullable();
-            $table->timestamps();
+            $table->timestampTz('cloture_le')->nullable();
+            $table->uuid('cloture_par_id')->nullable()->comment('Identifiant externe de l acteur ayant clôturé');
+            $table->boolean('ajustements_autorises')->default(true);
+            $table->text('notes')->nullable();
+            $table->timestampsTz();
+            $table->unique(['dossier_comptable_id', 'annee']);
         });
     }
 
@@ -36,6 +38,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Suppression : retrait d'un exercice après ses périodes, écritures et états liés.
         Schema::dropIfExists('exercice_comptables');
     }
 };

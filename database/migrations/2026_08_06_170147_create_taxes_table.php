@@ -11,14 +11,26 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ajout : règles de taxes paramétrables par dossier et périodes de validité.
         Schema::create('taxes', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignUuid('dossier_comptable_id')->constrained('dossiers_comptables')->cascadeOnDelete();
             $table->string('nom');
-            $table->string('code');
-            $table->decimal('taux', 5, 2);
+            $table->string('code', 30);
+            $table->string('type', 20)->default('pourcentage');
+            $table->string('usage', 20)->default('les_deux');
+            $table->decimal('taux', 9, 6)->default(0);
+            $table->decimal('montant_fixe', 19, 4)->nullable();
+            $table->boolean('prix_taxe_incluse')->default(false);
+            $table->boolean('incluse_dans_base')->default(false);
+            $table->string('portee', 20)->default('ligne');
             $table->text('description')->nullable();
             $table->boolean('actif')->default(true);
-            $table->timestamps();
+            $table->date('date_debut')->nullable();
+            $table->date('date_fin')->nullable();
+            $table->json('regles')->nullable();
+            $table->timestampsTz();
+            $table->unique(['dossier_comptable_id', 'code']);
         });
     }
 
@@ -27,6 +39,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Suppression : retrait des règles fiscales après leurs lignes dépendantes.
         Schema::dropIfExists('taxes');
     }
 };

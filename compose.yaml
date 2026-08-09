@@ -1,0 +1,24 @@
+name: gestion-comptable
+
+services:
+  database:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-gestion_comptable}
+      POSTGRES_USER: ${DB_USERNAME:-gestion_comptable}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-local_dev_password}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - gestion_comptable_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  gestion_comptable_postgres:
+

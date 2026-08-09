@@ -11,14 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Ajout : référentiels réglementaires versionnés (SYSCOHADA, IFRS ou plans nationaux).
         Schema::create('referentiel_comptables', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nom');
-            $table->string('pays_applique');
+            $table->string('code', 30)->unique();
+            $table->string('pays_code', 2)->nullable();
             $table->text('description')->nullable();
             $table->string('version');
             $table->date('date_mise_en_vigueur');
-            $table->timestamps();
+            $table->date('date_fin_validite')->nullable();
+            $table->boolean('actif')->default(true);
+            $table->timestampsTz();
         });
     }
 
@@ -27,6 +31,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Suppression : retrait d'un référentiel uniquement après les dossiers et comptes associés.
         Schema::dropIfExists('referentiel_comptables');
     }
 };
